@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { Fraunces, Geist, Geist_Mono } from "next/font/google";
+
+import { PostHogProvider } from "@/components/posthog-provider";
+
 import "./globals.css";
 
 const geistSans = Geist({
@@ -48,7 +51,7 @@ export default function RootLayout({
         className="min-h-full flex flex-col bg-background text-foreground"
         suppressHydrationWarning
       >
-        {children}
+        <PostHogProvider>{children}</PostHogProvider>
       </body>
     </html>
   );
