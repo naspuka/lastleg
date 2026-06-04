@@ -21,8 +21,24 @@ const fraunces = Fraunces({
   axes: ["opsz", "SOFT"],
 });
 
+// Pick the right absolute base for OG / canonical URLs:
+// - Production: Vercel sets VERCEL_PROJECT_PRODUCTION_URL to the stable
+//   project URL (e.g. lastleg-azure.vercel.app or the custom domain once we
+//   register one).
+// - Preview deploys: VERCEL_URL points to the per-deploy URL so previews share
+//   correctly.
+// - Local dev: fall back to localhost:4000.
+// Once we own a custom domain, hard-code it here and drop the env logic.
+const metadataBaseUrl = (() => {
+  const prod = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  if (prod) return `https://${prod}`;
+  const preview = process.env.VERCEL_URL;
+  if (preview) return `https://${preview}`;
+  return "http://localhost:4000";
+})();
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://lastleg.app"),
+  metadataBase: new URL(metadataBaseUrl),
   title: {
     default: "LastLeg — Don't waste your unused coach ticket",
     template: "%s · LastLeg",
