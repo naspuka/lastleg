@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import { serve } from "inngest/next";
 
 import { inngest } from "@/lib/inngest/client";
@@ -7,18 +8,39 @@ import { functions } from "@/lib/inngest/functions";
 // service via SDK introspection (PUT /api/inngest) and receives function-run
 // callbacks (POST). GET returns the dev landing page.
 //
-// Phase 0/1 ships this route empty (only the health-check fn). Phase 2+
-// adds verify-listing, release-ticket, release-payout, match-alerts, etc.
+// Env-gating: in production, Inngest's serve handler requires either
+// INNGEST_SIGNING_KEY or local-dev mode. With neither, it 500s on every
+// request. Without keys we instead return a clean 503 with diagnostic copy
+// so curling the endpoint tells the operator what's missing — matches the
+// behaviour of /api/clerk/webhook when its secret is unset.
 //
-// Env-gating: Inngest's serve() handler tolerates a missing signing key in
-// dev (it talks to the local Inngest CLI on port 8288). In production, the
-// platform-level INNGEST_SIGNING_KEY + INNGEST_EVENT_KEY env vars need to
-// be set. Without them, registration calls from Inngest cloud will be
-// rejected — but the app still boots, which is what we want.
+// In local dev the Inngest CLI (`npx inngest-cli@latest dev`) handles
+// things without any env vars; serve() detects the local mode automatically.
 
 export const runtime = "nodejs";
 
-export const { GET, POST, PUT } = serve({
+const inProduction = process.env.VERCEL_ENV === "production";
+const hasSigningKey = Boolean(process.env.INNGEST_SIGNING_KEY);
+
+const handlers = serve({
   client: inngest,
   functions,
 });
+
+function notConfiguredResponse() {
+  return NextResponse.json(
+    {
+      ok: false,
+      error: "inngest is not configured for this environment",
+      missing: ["INNGEST_SIGNING_KEY", "INNGEST_EVENT_KEY"],
+      docs: "https://github.com/naspuka/lastleg/blob/main/docs/SETUP.md#9-inngest-background-jobs--p1-14-do-when-shipping-seller-flow",
+    },
+    { status: 503 }
+  );
+}
+
+const enabled = !inProduction || hasSigningKey;
+
+export const GET = enabled ? handlers.GET : notConfiguredResponse;
+export const POST = enabled ? handlers.POST : notConfiguredResponse;
+export const PUT = enabled ? handlers.PUT : notConfiguredResponse;
