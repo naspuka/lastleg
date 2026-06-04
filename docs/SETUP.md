@@ -9,7 +9,7 @@ through them in order — later steps depend on earlier ones.
 > (~£14/year), and we explicitly defer that until there's a reason to spend.
 > Until then, the app lives at the auto-generated `*.vercel.app` URL.
 
-If you get stuck, the [`DECISIONS.md`](DECISIONS.md) entries explain *why*
+If you get stuck, the [`DECISIONS.md`](DECISIONS.md) entries explain _why_
 each service was chosen.
 
 ## Quick-start (£0 path)
@@ -68,7 +68,7 @@ green. CI will enforce this in P1-17.
 
 ---
 
-## 2. Register the domain — P0-01 *(deferred)*
+## 2. Register the domain — P0-01 _(deferred)_
 
 > **Skip this section for now** — the £0 path uses the Vercel-provided
 > subdomain like `lastleg-azure.vercel.app`. Come back here when you decide
@@ -144,7 +144,7 @@ includes 500 MB storage, plenty for the waitlist + early MVP usage.
    Output: `.next`). Don't deploy yet — set env vars first.
 4. **Settings → Environment Variables**, add:
    - `DATABASE_URL` (production value — use the **prod-branch pooled URL**
-     from Neon, *not* the dev one) → **Production** environment
+     from Neon, _not_ the dev one) → **Production** environment
    - `DATABASE_URL` (dev value) → **Preview** + **Development** environments
 5. **Settings → Domains**, add `lastleg.app` and `www.lastleg.app`. Vercel
    will show you DNS records to add.
@@ -159,7 +159,7 @@ includes 500 MB storage, plenty for the waitlist + early MVP usage.
 
 ---
 
-## 5. Resend transactional email — P0-10 *(deferred until domain)*
+## 5. Resend transactional email — P0-10 _(deferred until domain)_
 
 > **Skip this section for now.** Resend's free tier won't send to real
 > visitors until you have a verified sender domain. The waitlist works fine
@@ -245,7 +245,7 @@ auto-migrations on deploy are the Phase 7 conversation.
 
 **Resend "domain not verified"**
 DNS propagation can take up to a few hours. Use https://dnschecker.org to
-confirm the records have propagated globally before re-clicking *verify* in
+confirm the records have propagated globally before re-clicking _verify_ in
 Resend.
 
 **Production env var changes don't take effect**
@@ -255,7 +255,51 @@ for it to take effect.
 
 ---
 
+## 8. Clerk auth — P1-09 _(do when ready for auth-gated routes)_
+
+[Clerk](https://dashboard.clerk.com) handles signup, sign-in, email + phone
+OTP per D015.
+
+1. **Create application** at https://dashboard.clerk.com → New Application.
+   Name `lastleg`, enable email + phone (we use both for OTP).
+2. **API Keys** → copy `Publishable key` and `Secret key`.
+3. Add to `.env.local` AND Vercel env vars (Production + Preview):
+   ```
+   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...
+   CLERK_SECRET_KEY=sk_...
+   ```
+4. **Webhooks** → **Add Endpoint** → URL:
+   `https://lastleg-azure.vercel.app/api/clerk/webhook` (swap in your prod
+   URL). Subscribe to `user.created`, `user.updated`, `user.deleted`.
+5. Copy the **Signing Secret** from the webhook detail page →
+   `CLERK_WEBHOOK_SIGNING_SECRET` env var (Vercel + `.env.local`).
+6. Redeploy. The `users` table will start filling in as people sign up.
+
+Verify: sign up with a test account, then check Neon — there should be a
+new `users` row with your `clerk_user_id`, email, derived handle.
+
+## 9. Inngest background jobs — P1-14 _(do when shipping seller flow)_
+
+[Inngest](https://app.inngest.com) runs our background jobs (verify-listing,
+release-ticket, release-payout, etc — Phase 2+). Phase 1 only needs a
+health-check function registered.
+
+1. Sign up at https://app.inngest.com.
+2. **Apps** → **Sync new app** → enter your deploy URL +
+   `/api/inngest` (e.g. `https://lastleg-azure.vercel.app/api/inngest`).
+3. **Settings → Signing Keys** → copy → `INNGEST_SIGNING_KEY` env var.
+4. **Settings → Event Keys** → create a `prod` event key →
+   `INNGEST_EVENT_KEY`.
+5. Add both to Vercel (Production + Preview) and `.env.local`.
+6. Redeploy.
+
+Verify: curl
+`https://lastleg-azure.vercel.app/api/inngest/health-check` → should return
+`{ ok: true, ids: [...] }`. Open Inngest dashboard → **Runs** → you should
+see the `health-check` function ran.
+
 ## What's next
 
-Once steps 1–7 are green, Phase 0 is shipped. Move on to Phase 1 (foundations
-— auth, full schema, CI). See [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md#phase-1--foundations).
+Once Clerk + Inngest are wired, Phase 1 is shipped. Move on to Phase 2
+(seller flow: PDF parsing, verification, listing UI).
+See [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md#phase-2--seller-flow).

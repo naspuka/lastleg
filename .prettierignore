@@ -1,0 +1,24 @@
+# Generated artefacts
+.next/
+out/
+build/
+node_modules/
+coverage/
+
+# Drizzle migrations are auto-formatted by drizzle-kit; reformatting via
+# prettier would churn them needlessly.
+drizzle/
+
+# Lock files
+pnpm-lock.yaml
+
+# shadcn-generated UI primitives — keep their upstream formatting so future
+# `pnpm dlx shadcn add` diffs stay minimal.
+src/components/ui/
+
+# Static assets
+public/
+
+# Misc
+.vercel/
+.husky/_/

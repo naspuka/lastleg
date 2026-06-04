@@ -81,7 +81,7 @@ route_origin               operator                   resolved_by
 route_destination          first_seen_listing_id      refund_amount_pence
 max_price_pence            sold_in_transaction_id     created_at
 window_start               status (live|sold|expired) resolved_at
-window_end                 (Uniqueness invariant      
+window_end                 (Uniqueness invariant
 notify_email               on booking_reference +     AuditLog
 notify_sms                 operator — prevents        ────────
 created_at                 dup listings)              id (PK)
@@ -191,20 +191,20 @@ last_match_at                                         actor_user_id
 
 ## 4. External integrations
 
-| Service | Purpose | Critical-path? | Failure mode |
-|---|---|---|---|
-| Clerk | Auth (email + phone OTP) | Yes (signin) | Auth down → users can't sign in. Cached sessions still work for ~hours. |
-| Stripe Payments | Card capture, escrow | Yes (checkout) | Checkout down → no new transactions. Existing escrow unaffected. |
-| Stripe Connect | Seller onboarding + payout | Yes (payout) | Payouts queue; LastLeg holds funds longer. |
-| Stripe Identity | Seller KYC | Yes (first payout) | First payouts delayed until restored. |
-| Resend | Transactional email | Soft (alerts) | Queue for retry; SMS still fires for high-priority. |
-| Twilio | SMS for high-priority alerts | Soft | Email fallback; UK delivery may take seconds longer. |
-| Vercel Blob | Ticket PDF storage | Yes (PDF) | Listings cannot be created or released. |
-| Inngest | Background jobs | Yes (escrow/release) | All time-sensitive logic stops. Critical dependency. |
-| pdf.js | Server-side PDF parsing | Yes (verification) | Manual review queue picks up. |
-| Sentry | Error capture | No | Errors logged to Vercel only; investigation slower. |
-| PostHog | Analytics | No | No business impact. |
-| Operator scan APIs | Post-departure ticket scan confirmation | No (best-effort) | Falls back to honour-system + dispute-based handling. |
+| Service            | Purpose                                 | Critical-path?       | Failure mode                                                            |
+| ------------------ | --------------------------------------- | -------------------- | ----------------------------------------------------------------------- |
+| Clerk              | Auth (email + phone OTP)                | Yes (signin)         | Auth down → users can't sign in. Cached sessions still work for ~hours. |
+| Stripe Payments    | Card capture, escrow                    | Yes (checkout)       | Checkout down → no new transactions. Existing escrow unaffected.        |
+| Stripe Connect     | Seller onboarding + payout              | Yes (payout)         | Payouts queue; LastLeg holds funds longer.                              |
+| Stripe Identity    | Seller KYC                              | Yes (first payout)   | First payouts delayed until restored.                                   |
+| Resend             | Transactional email                     | Soft (alerts)        | Queue for retry; SMS still fires for high-priority.                     |
+| Twilio             | SMS for high-priority alerts            | Soft                 | Email fallback; UK delivery may take seconds longer.                    |
+| Vercel Blob        | Ticket PDF storage                      | Yes (PDF)            | Listings cannot be created or released.                                 |
+| Inngest            | Background jobs                         | Yes (escrow/release) | All time-sensitive logic stops. Critical dependency.                    |
+| pdf.js             | Server-side PDF parsing                 | Yes (verification)   | Manual review queue picks up.                                           |
+| Sentry             | Error capture                           | No                   | Errors logged to Vercel only; investigation slower.                     |
+| PostHog            | Analytics                               | No                   | No business impact.                                                     |
+| Operator scan APIs | Post-departure ticket scan confirmation | No (best-effort)     | Falls back to honour-system + dispute-based handling.                   |
 
 ---
 
@@ -212,51 +212,57 @@ last_match_at                                         actor_user_id
 
 All jobs run on Inngest. Idempotent by design (jobs check current state before acting).
 
-| Job | Trigger | What it does |
-|---|---|---|
-| `verify-listing` | Listing created | PDF parse, dup check, receipt-email wait, status transition |
-| `match-alerts` | Listing reaches `live` | Fan-out notifications to matching `RouteAlert` rows |
-| `decay-price` | Cron every 5 min OR listing event | Steps `current_price_pence` toward `floor_price_pence` per the decay schedule |
-| `expire-listing` | Listing departure time | Marks unsold listings as `expired` |
-| `release-ticket` | Scheduled per Transaction | Releases signed PDF URL to buyer per adaptive-release rule |
-| `release-payout` | Scheduled per Transaction | Captures PaymentIntent, triggers Stripe transfer to seller |
-| `process-claim` | Buyer files claim | Auto-approves or routes to manual review per guarantee policy |
-| `process-cancellation` | Cancellation reported | Refunds buyer, halts payout |
-| `reconcile-stripe` | Cron hourly | Reconciles Stripe webhooks against DB state, surfaces drift |
-| `cleanup-orphaned-blobs` | Cron daily | Removes Vercel Blob files for listings withdrawn/rejected >7 days ago |
+| Job                      | Trigger                           | What it does                                                                  |
+| ------------------------ | --------------------------------- | ----------------------------------------------------------------------------- |
+| `verify-listing`         | Listing created                   | PDF parse, dup check, receipt-email wait, status transition                   |
+| `match-alerts`           | Listing reaches `live`            | Fan-out notifications to matching `RouteAlert` rows                           |
+| `decay-price`            | Cron every 5 min OR listing event | Steps `current_price_pence` toward `floor_price_pence` per the decay schedule |
+| `expire-listing`         | Listing departure time            | Marks unsold listings as `expired`                                            |
+| `release-ticket`         | Scheduled per Transaction         | Releases signed PDF URL to buyer per adaptive-release rule                    |
+| `release-payout`         | Scheduled per Transaction         | Captures PaymentIntent, triggers Stripe transfer to seller                    |
+| `process-claim`          | Buyer files claim                 | Auto-approves or routes to manual review per guarantee policy                 |
+| `process-cancellation`   | Cancellation reported             | Refunds buyer, halts payout                                                   |
+| `reconcile-stripe`       | Cron hourly                       | Reconciles Stripe webhooks against DB state, surfaces drift                   |
+| `cleanup-orphaned-blobs` | Cron daily                        | Removes Vercel Blob files for listings withdrawn/rejected >7 days ago         |
 
 ---
 
 ## 6. Security considerations
 
 ### Authentication / Authorization
+
 - All authenticated routes gated by Clerk middleware at the Edge.
 - Server-side actions re-verify session and user ownership of any resource being modified (defence in depth).
 - Admin actions (manual claim review, refunds) gated by a separate Clerk role + audit logged.
 
 ### Payment security
+
 - LastLeg never sees raw card data — Stripe Elements / Checkout handles input.
 - All Stripe webhook handlers verify signatures.
 - All money movements (capture, refund, transfer) are logged to `AuditLog` with the originating Stripe event ID.
 
 ### PDF / file uploads
+
 - Vercel Blob URLs for ticket PDFs are short-TTL signed URLs only — never directly accessible.
 - Uploaded PDFs are scanned for malformed structures before parsing (defence against parser exploits).
 - Maximum file size: 5 MB per ticket (well above any real coach ticket).
 
 ### Personal data (UK GDPR)
+
 - Personal data stored: email, phone, handle, Stripe identity reference, ticket-derived names.
 - Data minimisation: passenger name from a ticket is stored only as `first_name + initial` (e.g. "Sarah K."), never full name. Full name lives only in the Stripe Identity record.
 - Right to deletion: implemented as soft-delete on `User`; transactional records preserved with PII redacted.
 - DPA + privacy policy at launch (Phase 7).
 
 ### Fraud / abuse
+
 - Rate limits on listing creation (10 per user per day) and account creation (3 per IP per hour).
 - Device fingerprinting (via Stripe Radar) on payment attempts.
 - Pattern detection: same IP/device buying from + selling to same account → flagged for review.
 - Stripe Connect reverse-transfer for seller misconduct payouts.
 
 ### Audit log
+
 - Every state-changing action writes an entry. Append-only; never modified or deleted.
 - Used for dispute resolution, regulator inquiries, internal investigation.
 
@@ -264,12 +270,12 @@ All jobs run on Inngest. Idempotent by design (jobs check current state before a
 
 ## 7. Environments and deployment
 
-| Environment | Branch | DB | Stripe | Domain |
-|---|---|---|---|---|
-| Local dev | any | Neon dev branch | Stripe test | `localhost:3000` |
-| Preview | PR branches | Neon preview branches (auto) | Stripe test | `*.lastleg.vercel.app` |
-| Staging | `staging` | dedicated Neon DB | Stripe test | `staging.lastleg.app` |
-| Production | `main` | production Neon DB | Stripe live | `lastleg.app` |
+| Environment | Branch      | DB                           | Stripe      | Domain                 |
+| ----------- | ----------- | ---------------------------- | ----------- | ---------------------- |
+| Local dev   | any         | Neon dev branch              | Stripe test | `localhost:3000`       |
+| Preview     | PR branches | Neon preview branches (auto) | Stripe test | `*.lastleg.vercel.app` |
+| Staging     | `staging`   | dedicated Neon DB            | Stripe test | `staging.lastleg.app`  |
+| Production  | `main`      | production Neon DB           | Stripe live | `lastleg.app`          |
 
 Migrations run on deploy via Drizzle. Stripe webhook secrets per environment. Inngest separate apps per environment.
 

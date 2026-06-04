@@ -8,7 +8,7 @@ export function TicketIllustration({ className }: { className?: string }) {
       <svg
         viewBox="0 0 320 200"
         xmlns="http://www.w3.org/2000/svg"
-        className="w-full h-auto"
+        className="h-auto w-full"
         role="img"
       >
         <title>Coach ticket illustration</title>
@@ -24,12 +24,7 @@ export function TicketIllustration({ className }: { className?: string }) {
               floodOpacity="0.15"
             />
           </filter>
-          <pattern
-            id="perf"
-            patternUnits="userSpaceOnUse"
-            width="4"
-            height="8"
-          >
+          <pattern id="perf" patternUnits="userSpaceOnUse" width="4" height="8">
             <circle cx="2" cy="4" r="1" fill="oklch(0.89 0.015 85)" />
           </pattern>
         </defs>

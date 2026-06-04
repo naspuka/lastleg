@@ -111,12 +111,14 @@ Sits below the explainer. Centred, max-width ~480px on desktop. shadcn `Card` co
 ```
 
 Field rules
+
 - **Email** — required, validated client-side, deduped server-side on submit (case-insensitive lower-cased before insert).
 - **Phone** — optional. UK only at MVP (per D003 + D017 SMS via Twilio). Format: E.164. Show inline hint "we'll only text you about route matches you opted in for."
 - **Role** — required, single select. Saved as enum `buyer | seller | both`.
 - **Routes** — required, multi-select, at least one. Persist as array of route slugs (`lon-man`, `lon-bir`, `lon-lee`, `lon-edi`, `lon-bri`). The 5th corridor is provisionally `lon-bri`; flag in form as TBD so we can swap it without breaking schema.
 
 Submit behaviour (Phase 0)
+
 - Server action inserts into `waitlist` table.
 - Triggers Resend confirmation email (P0-10).
 - PostHog event `waitlist_signup` with `{ role, routes_count }` (no PII in event props beyond what's required).
@@ -156,6 +158,7 @@ Accordion (shadcn `Accordion`). 6 items, all collapsed by default. Order = expec
 6. **Which routes are you launching with?** London ↔ Manchester, Birmingham, Leeds, Edinburgh, and one more TBD. We'll expand from there. (Per D004.)
 
 Copy direction
+
 - Each answer ≤ 40 words.
 - Plain language. No "rest assured" / "industry-leading" / "seamless."
 - Where useful, link the underlying decision page (post-launch we'll publish a `/why` page; for now the FAQ is the source).

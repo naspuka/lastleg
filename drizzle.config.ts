@@ -11,7 +11,7 @@ config({ path: ".env" });
 // Drizzle CLI configuration. Used by `pnpm db:generate` / `db:migrate` /
 // `db:studio`. Runtime queries use src/db/client.ts directly.
 export default defineConfig({
-  schema: "./src/db/schema.ts",
+  schema: "./src/db/schema",
   out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: {

@@ -25,6 +25,7 @@ Format follows lightweight ADRs (Architecture Decision Records).
 **Date:** 2026-06-03
 
 **Context.** Different ticket types have different transferability:
+
 - **Flights:** strict name + ID match, transfer effectively impossible. Out of scope permanently.
 - **UK rail Advance tickets** (the non-refundable target inventory): National Rail Conditions of Travel Condition 28 explicitly forbids transfer. Practically, ID is rarely checked, but operating a platform that facilitates breaches of NRCoT carries cease-and-desist, regulatory (ORR), and lobbying risk. SecondSeat is a cautionary tale here.
 - **Coach/bus (Megabus, FlixBus, National Express, Stagecoach):** mostly anonymous barcodes, often no ID check, some operators offer paid name-change flows. Legally far cleaner.
@@ -56,6 +57,7 @@ Format follows lightweight ADRs (Architecture Decision Records).
 **Context.** A coach marketplace with national coverage but no per-corridor liquidity is dead. Buyers won't return after one empty search.
 
 **Decision.** Launch on five corridors only:
+
 1. London ↔ Manchester
 2. London ↔ Birmingham
 3. London ↔ Leeds
@@ -152,12 +154,14 @@ Saturate these before adding more.
 **Date:** 2026-06-03
 
 **Context.** A ticket marketplace without verification is a scam marketplace. Four layers of verification, each catching different fraud modes:
+
 1. Ticket authenticity (is this a real, unused ticket?)
 2. Original price proof (is the cap being respected?)
 3. Non-duplication (is this ticket also listed elsewhere or sold twice?)
 4. Post-departure confirmation (was the ticket actually used by the buyer?)
 
 **Decision.**
+
 1. Server-side PDF parsing extracts operator, booking reference, route, time, price, name (if present).
 2. Sellers forward the original booking confirmation email to `receipts@lastleg.app` for price verification.
 3. Booking references are stored and checked against the full history to prevent duplicate listings.
@@ -203,6 +207,7 @@ Critically: Stripe Connect onboarding is **not** required at signup. It is requi
 **Context.** Releasing the ticket file instantly on payment maximises UX but gives a malicious seller the longest possible window to misuse (relist on Facebook, claim an operator refund, board with the original). Releasing at T-15min closes that window but breaks the standby-buyer use case (someone at the station with 10 minutes to spare).
 
 **Decision.** Adaptive release:
+
 - If the sale completes more than 1 hour before departure → ticket file is held; released to buyer at T-30 minutes
 - If the sale completes within 1 hour of departure → ticket file is released immediately on payment
 
@@ -232,7 +237,7 @@ UI surfaces a clear countdown to buyers in the "held" state ("Your ticket will b
 
 **Context.** Some coach tickets have the original purchaser's name printed. Drivers check ID infrequently but not never. Three policies considered: ignore (accept any ticket without warning), coach the buyer to impersonate (legally toxic), reject all named tickets (cuts inventory 50–70%), disclose at checkout.
 
-**Decision.** Accept named tickets. At buyer checkout, surface explicitly: *"This ticket is in the name of [Seller First Name + Initial]. Drivers occasionally check ID on this route. If you are denied boarding, the LastLeg guarantee fund refunds you in full."* Buyer accepts the risk knowingly.
+**Decision.** Accept named tickets. At buyer checkout, surface explicitly: _"This ticket is in the name of [Seller First Name + Initial]. Drivers occasionally check ID on this route. If you are denied boarding, the LastLeg guarantee fund refunds you in full."_ Buyer accepts the risk knowingly.
 
 **Why.** Maximises inventory (the alternative — rejecting all named tickets — kills supply). Treats users as adults. Legally defensible (informed consent, no instruction to deceive). Per-route denied-boarding rates will be refined from real outcomes within ~6 months of launch.
 
@@ -272,6 +277,7 @@ UI surfaces a clear countdown to buyers in the "held" state ("Your ticket will b
 **Context.** Need a stack that ships fast at MVP and scales to real volume. Optimising for: TypeScript end-to-end, minimal vendor count without single-vendor lock-in, mature billing/auth/identity primitives.
 
 **Decision.**
+
 - **Framework:** Next.js 15 (App Router) + TypeScript
 - **Hosting:** Vercel
 - **Database:** Neon Postgres (serverless, branching)
@@ -300,6 +306,38 @@ UI surfaces a clear countdown to buyers in the "held" state ("Your ticket will b
 **Decision.** Skip the clickable prototype entirely. Ship a landing page this week (Phase 0). Build the real MVP in parallel over the following 4–6 weeks (Phases 1–8). The landing page does double duty as marketing AND audience-building while the real product is built.
 
 **Why.** Empty marketplaces die. Capturing waitlist signups with route preferences starts populating the cold-start hopper before launch, so day-1 has live demand. Skipping the prototype avoids learning the wrong things from fake data.
+
+---
+
+## D021 — Primary keys: UUID v4 not ULID (amendment to D-architecture)
+
+**Status:** Accepted
+**Date:** 2026-06-04
+
+**Context.** [`ARCHITECTURE.md`](ARCHITECTURE.md#2-data-model) originally
+specified ULIDs for all IDs ("sortable, URL-safe"). When implementing
+the Phase 1 schema (P1-04..08), three frictions surfaced:
+
+1. ULID generation has to happen in app code (no native Postgres
+   function), pulling in an extra dep and making every insert path
+   responsible for ID generation.
+2. The "sortable by creation time" benefit is fully satisfied by sorting
+   on `created_at` for every query we actually run.
+3. The `waitlist` table from Phase 0 already used `uuid` with
+   `gen_random_uuid()`, so going ULID-everywhere would require a
+   migration of an existing table.
+
+**Decision.** Use `uuid` with Postgres-native `gen_random_uuid()` as the
+default for every primary key. Drop the ULID requirement from the
+architecture doc.
+
+**Why.** DB-side generation removes the app dependency, matches the
+existing waitlist table, and gives us URL-safe values. We accept losing
+client-visible time-ordering on IDs; we don't need it.
+
+**Migration path.** If we later need short public-facing IDs (for URLs
+or human-shareable codes), add a separate `public_id` column with the
+shape we want (Sqid, nanoid, etc) — keep `uuid` as the primary key.
 
 ---
 

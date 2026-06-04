@@ -10,40 +10,38 @@ export const contentType = "image/png";
 
 export default function AppleIcon() {
   return new ImageResponse(
-    (
+    <div
+      style={{
+        width: 180,
+        height: 180,
+        position: "relative",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#1B4D3E",
+        color: "#FAF7F0",
+        fontFamily: "Georgia, 'Times New Roman', serif",
+        fontWeight: 700,
+        fontSize: 124,
+        letterSpacing: -4,
+        borderRadius: 40,
+      }}
+    >
+      L
+      {/* coral live-dot in the corner echoes the ticket motif on the landing */}
       <div
         style={{
-          width: 180,
-          height: 180,
-          position: "relative",
+          position: "absolute",
+          top: 28,
+          right: 28,
+          width: 16,
+          height: 16,
+          borderRadius: 8,
+          background: "#E8745C",
           display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#1B4D3E",
-          color: "#FAF7F0",
-          fontFamily: "Georgia, 'Times New Roman', serif",
-          fontWeight: 700,
-          fontSize: 124,
-          letterSpacing: -4,
-          borderRadius: 40,
         }}
-      >
-        L
-        {/* coral live-dot in the corner echoes the ticket motif on the landing */}
-        <div
-          style={{
-            position: "absolute",
-            top: 28,
-            right: 28,
-            width: 16,
-            height: 16,
-            borderRadius: 8,
-            background: "#E8745C",
-            display: "flex",
-          }}
-        />
-      </div>
-    ),
+      />
+    </div>,
     { ...size }
   );
 }

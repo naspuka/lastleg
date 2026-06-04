@@ -24,11 +24,11 @@ import { TicketIllustration } from "./ticket-illustration";
 
 export function Nav() {
   return (
-    <header className="w-full border-b border-border/60 bg-background/80 backdrop-blur-sm sticky top-0 z-30">
-      <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
+    <header className="border-border/60 bg-background/80 sticky top-0 z-30 w-full border-b backdrop-blur-sm">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link
           href="/"
-          className="font-heading text-xl font-semibold tracking-tight text-primary"
+          className="font-heading text-primary text-xl font-semibold tracking-tight"
         >
           LastLeg
         </Link>
@@ -62,20 +62,20 @@ export function Hero() {
       <div className="mx-auto max-w-6xl px-6 pt-14 pb-20 sm:pt-20 sm:pb-28">
         <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
           <FadeUp className="text-center lg:text-left">
-            <span className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
-              <span className="size-1.5 rounded-full bg-brand-coral" />
+            <span className="border-primary/15 bg-primary/5 text-primary inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium">
+              <span className="bg-brand-coral size-1.5 rounded-full" />
               Launching summer 2026 · UK only
             </span>
-            <h1 className="mt-6 font-heading text-4xl font-semibold leading-[1.05] tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+            <h1 className="font-heading text-foreground mt-6 text-4xl leading-[1.05] font-semibold tracking-tight sm:text-5xl lg:text-6xl">
               Don&rsquo;t waste your unused{" "}
               <span className="text-primary">coach ticket</span>.
             </h1>
-            <p className="mt-6 text-lg leading-relaxed text-muted-foreground sm:text-xl">
+            <p className="text-muted-foreground mt-6 text-lg leading-relaxed sm:text-xl">
               LastLeg is a marketplace for last-minute UK coach tickets you
               can&rsquo;t use. Sellers recoup something. Buyers get a discount.
               No scalping.
             </p>
-            <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:gap-5 lg:items-start lg:justify-start sm:justify-center">
+            <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center sm:gap-5 lg:items-start lg:justify-start">
               <a
                 href="#waitlist"
                 className={cn(
@@ -88,12 +88,12 @@ export function Hero() {
               </a>
               <a
                 href="#how"
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline"
+                className="text-muted-foreground hover:text-foreground text-sm font-medium underline-offset-4 transition-colors hover:underline"
               >
                 See how it works →
               </a>
             </div>
-            <p className="mt-6 text-sm text-muted-foreground/80">
+            <p className="text-muted-foreground/80 mt-6 text-sm">
               Free for sellers. Buyers pay £1 + 8%, capped at £4. No scalping,
               ever.
             </p>
@@ -102,9 +102,9 @@ export function Hero() {
           <FadeUp delay={150} className="relative">
             <div className="relative mx-auto max-w-md lg:max-w-none">
               <TicketIllustration />
-              <p className="mt-4 text-center text-xs text-muted-foreground lg:text-left">
-                Example: a £24 walk-up ticket steps down to £9 as the coach
-                gets closer to leaving.
+              <p className="text-muted-foreground mt-4 text-center text-xs lg:text-left">
+                Example: a £24 walk-up ticket steps down to £9 as the coach gets
+                closer to leaving.
               </p>
             </div>
           </FadeUp>
@@ -137,13 +137,13 @@ const STEPS = [
 
 export function ThreeStep() {
   return (
-    <section id="how" className="border-t border-border/60 bg-card/50">
+    <section id="how" className="border-border/60 bg-card/50 border-t">
       <div className="mx-auto max-w-6xl px-6 py-20 sm:py-24">
         <FadeUp className="max-w-2xl">
           <h2 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
             How it works
           </h2>
-          <p className="mt-4 text-base leading-relaxed text-muted-foreground sm:text-lg">
+          <p className="text-muted-foreground mt-4 text-base leading-relaxed sm:text-lg">
             Three steps. The system handles the awkward bits — verification,
             escrow, and post-trip payouts — so you don&rsquo;t have to.
           </p>
@@ -154,19 +154,19 @@ export function ThreeStep() {
             const Icon = step.icon;
             return (
               <FadeUp key={step.n} delay={i * 100}>
-                <div className="group relative flex h-full flex-col rounded-2xl border border-border bg-card p-6 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/5 sm:p-7">
+                <div className="group border-border bg-card hover:shadow-primary/5 relative flex h-full flex-col rounded-2xl border p-6 transition-all hover:-translate-y-0.5 hover:shadow-lg sm:p-7">
                   <div className="flex items-center gap-4">
-                    <div className="grid size-10 place-content-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                    <div className="bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground grid size-10 place-content-center rounded-xl transition-colors">
                       <Icon className="size-5" />
                     </div>
-                    <span className="font-heading text-sm font-semibold tracking-wider text-muted-foreground">
+                    <span className="font-heading text-muted-foreground text-sm font-semibold tracking-wider">
                       STEP {step.n}
                     </span>
                   </div>
-                  <h3 className="mt-5 font-heading text-2xl font-semibold tracking-tight">
+                  <h3 className="font-heading mt-5 text-2xl font-semibold tracking-tight">
                     {step.title}
                   </h3>
-                  <p className="mt-3 text-base leading-relaxed text-muted-foreground">
+                  <p className="text-muted-foreground mt-3 text-base leading-relaxed">
                     {step.body}
                   </p>
                 </div>
@@ -199,20 +199,20 @@ const TRUST = [
 
 export function TrustStrip() {
   return (
-    <section className="border-y border-border/60 bg-primary text-primary-foreground">
-      <div className="mx-auto max-w-6xl px-6 py-14 grid gap-10 sm:grid-cols-3 sm:gap-8">
+    <section className="border-border/60 bg-primary text-primary-foreground border-y">
+      <div className="mx-auto grid max-w-6xl gap-10 px-6 py-14 sm:grid-cols-3 sm:gap-8">
         {TRUST.map((t, i) => {
           const Icon = t.icon;
           return (
             <FadeUp key={t.title} delay={i * 100}>
               <div className="flex flex-col gap-3">
-                <div className="grid size-10 place-content-center rounded-xl bg-primary-foreground/10 text-brand-coral">
+                <div className="bg-primary-foreground/10 text-brand-coral grid size-10 place-content-center rounded-xl">
                   <Icon className="size-5" />
                 </div>
                 <h3 className="font-heading text-lg font-semibold">
                   {t.title}
                 </h3>
-                <p className="text-sm leading-relaxed text-primary-foreground/70">
+                <p className="text-primary-foreground/70 text-sm leading-relaxed">
                   {t.body}
                 </p>
               </div>
@@ -240,7 +240,7 @@ export function Routes() {
           <h2 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
             Launch corridors
           </h2>
-          <p className="mt-4 text-base leading-relaxed text-muted-foreground sm:text-lg">
+          <p className="text-muted-foreground mt-4 text-base leading-relaxed sm:text-lg">
             We&rsquo;re saturating five UK corridors first. Pick yours when you
             sign up and we&rsquo;ll invite you the moment that route goes live.
           </p>
@@ -249,25 +249,25 @@ export function Routes() {
         <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-5 lg:gap-4">
           {ROUTE_CARDS.map((route, i) => (
             <FadeUp key={route.code} delay={i * 60}>
-              <div className="group relative h-full rounded-xl border border-border bg-card p-5 transition-all hover:border-primary/40 hover:shadow-md">
+              <div className="group border-border bg-card hover:border-primary/40 relative h-full rounded-xl border p-5 transition-all hover:shadow-md">
                 <div className="flex items-start justify-between">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <span className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
                     {route.code}
                   </span>
                   {route.live ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-primary/8 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
-                      <span className="size-1 rounded-full bg-brand-coral" />
+                    <span className="bg-primary/8 text-primary inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase">
+                      <span className="bg-brand-coral size-1 rounded-full" />
                       Day 1
                     </span>
                   ) : (
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase">
                       TBD
                     </span>
                   )}
                 </div>
-                <div className="mt-4 font-heading text-base font-semibold leading-tight">
+                <div className="font-heading mt-4 text-base leading-tight font-semibold">
                   {route.from}
-                  <span className="mx-1.5 text-muted-foreground">→</span>
+                  <span className="text-muted-foreground mx-1.5">→</span>
                   {route.to}
                 </div>
               </div>
@@ -308,7 +308,7 @@ const FAQS = [
 
 export function Faq() {
   return (
-    <section className="border-t border-border/60 bg-card/40">
+    <section className="border-border/60 bg-card/40 border-t">
       <div className="mx-auto max-w-3xl px-6 py-20 sm:py-24">
         <FadeUp>
           <h2 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -316,14 +316,14 @@ export function Faq() {
           </h2>
         </FadeUp>
         <FadeUp delay={100}>
-          <Accordion className="mt-10 border-t border-border/60">
+          <Accordion className="border-border/60 mt-10 border-t">
             {FAQS.map((item) => (
               <AccordionItem key={item.q} value={item.q}>
                 <AccordionTrigger className="py-5 text-base font-medium sm:text-lg">
                   {item.q}
                 </AccordionTrigger>
                 <AccordionContent>
-                  <p className="leading-relaxed text-muted-foreground">
+                  <p className="text-muted-foreground leading-relaxed">
                     {item.a}
                   </p>
                 </AccordionContent>
@@ -338,27 +338,27 @@ export function Faq() {
 
 export function Footer() {
   return (
-    <footer className="border-t border-border/60 bg-background">
-      <div className="mx-auto max-w-6xl px-6 py-10 flex flex-col items-center gap-6 sm:flex-row sm:items-center sm:justify-between">
+    <footer className="border-border/60 bg-background border-t">
+      <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 px-6 py-10 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
-          <span className="font-heading text-lg font-semibold text-primary">
+          <span className="font-heading text-primary text-lg font-semibold">
             LastLeg
           </span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            <CircleCheck className="size-3 text-primary" />
+          <span className="bg-muted text-muted-foreground inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase">
+            <CircleCheck className="text-primary size-3" />
             UK only
           </span>
         </div>
-        <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
+        <div className="text-muted-foreground flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm">
           <a
             href="/privacy"
-            className="underline-offset-4 hover:text-foreground hover:underline"
+            className="hover:text-foreground underline-offset-4 hover:underline"
           >
             Privacy
           </a>
           <a
             href="mailto:contact@lastleg.app"
-            className="underline-offset-4 hover:text-foreground hover:underline"
+            className="hover:text-foreground underline-offset-4 hover:underline"
           >
             contact@lastleg.app
           </a>

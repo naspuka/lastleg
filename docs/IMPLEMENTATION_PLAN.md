@@ -15,6 +15,7 @@ Total target: **launch-ready MVP in ~6 weeks** of focused build time.
 **Dependencies:** none
 
 **Deliverables**
+
 - Static (or near-static) Next.js landing page deployed to `lastleg.app`
 - Hero: positioning, three-step explainer, FAQ
 - Waitlist signup form: email + (optional) phone + route interest (multi-select from 5 corridors) + role (buyer / seller / both)
@@ -25,11 +26,13 @@ Total target: **launch-ready MVP in ~6 weeks** of focused build time.
 - Privacy notice (lightweight — formal DPA in Phase 7)
 
 **Exit criteria**
+
 - Landing page is live at production domain over HTTPS
 - A signup completes end-to-end and appears in the DB + receives a confirmation email
 - PostHog records the page view + signup events
 
 **What this phase does NOT include**
+
 - Any product UI (no listings, no buyer flow, no auth beyond email capture)
 - Stripe, Twilio, or PDF parsing
 - Per-route landing pages (could be added later if SEO matters)
@@ -45,6 +48,7 @@ Total target: **launch-ready MVP in ~6 weeks** of focused build time.
 **Dependencies:** Phase 0 complete (uses same repo)
 
 **Deliverables**
+
 - Next.js 15 (App Router) + TypeScript baseline (`pnpm`, strict TS, ESLint, Prettier)
 - Tailwind CSS configured + shadcn/ui initialised + core components installed (Button, Input, Form, Toast, Dialog, Sheet, etc.)
 - Drizzle ORM set up against Neon (separate dev branch)
@@ -59,6 +63,7 @@ Total target: **launch-ready MVP in ~6 weeks** of focused build time.
 - Repo conventions documented in `docs/CONVENTIONS.md` (folder structure, naming, server-action patterns)
 
 **Exit criteria**
+
 - A logged-in user can hit a `/dashboard` page that says "Hello {name}" — proves auth → DB → server → client end-to-end
 - An Inngest test job fires from a server action and writes an audit log entry
 - A failing test or typecheck blocks PR merge
@@ -74,6 +79,7 @@ Total target: **launch-ready MVP in ~6 weeks** of focused build time.
 **Dependencies:** Phase 1
 
 **Deliverables**
+
 - `/sell/new` page: PDF upload (drag-drop, 5 MB max), original price, listing price, floor price, optional notes
 - Server action to create a `Listing` row in `pending_verification`, upload PDF to Vercel Blob with private signed URL
 - `verify-listing` Inngest job:
@@ -88,11 +94,13 @@ Total target: **launch-ready MVP in ~6 weeks** of focused build time.
 - Parsers for **FlixBus**, **National Express**, **Stagecoach** added in this phase (Megabus is first; rest follow)
 
 **Exit criteria**
+
 - A seller uploads a real Megabus ticket PDF, forwards the receipt, and sees the listing go live
 - The duplicate-listing check rejects a second attempt with the same booking ref
 - All four operator parsers extract correct data on at least 5 real sample tickets each
 
 **Notes**
+
 - Real ticket PDFs are required for parser dev. Acquire 5+ real tickets per operator (purchase + cancel where possible, or use historical tickets shared by friends/colleagues).
 - Parsers are necessarily fragile (operators change PDF format). Build them with a "this looked weird" telemetry signal that flags ambiguous tickets for manual review rather than auto-rejecting.
 
@@ -107,6 +115,7 @@ Total target: **launch-ready MVP in ~6 weeks** of focused build time.
 **Dependencies:** Phase 2 (needs live listings to browse)
 
 **Deliverables**
+
 - `/` homepage logged-in: search-led "Where are you going?" + featured live listings on the 5 corridors
 - `/browse` browseable feed: filterable by route, departure window, price; sorted by departure time ascending; auto-refresh every 30s on the live feed
 - Listing detail page: full route info, time, operator, current price, decay schedule preview, passenger-name disclosure if applicable
@@ -119,11 +128,13 @@ Total target: **launch-ready MVP in ~6 weeks** of focused build time.
 - Twilio integration for SMS alerts (UK numbers only at MVP)
 
 **Exit criteria**
+
 - A buyer with a saved alert receives an email + SMS within 60 seconds of a matching listing going live
 - Browse feed shows live listings and reflects price decay
 - A buyer can save a route alert and see it persist
 
 **What this phase does NOT include**
+
 - Checkout / payment (Phase 4)
 - Buyer-side dispute flow (Phase 6)
 
@@ -138,6 +149,7 @@ Total target: **launch-ready MVP in ~6 weeks** of focused build time.
 **Dependencies:** Phase 3
 
 **Deliverables**
+
 - Stripe Connect Express set up; account creation flow triggered from seller dashboard on first listing
 - Stripe Identity gating: required before any payout releases (not at signup, not at first listing)
 - Buyer checkout:
@@ -162,6 +174,7 @@ Total target: **launch-ready MVP in ~6 weeks** of focused build time.
 - `reconcile-stripe` hourly cron to detect drift
 
 **Exit criteria**
+
 - An end-to-end transaction completes in Stripe test mode: buyer pays, ticket is released at the right time, payout fires at departure + 1h
 - Adaptive-release timing verified for both early-sale (held) and late-sale (instant) paths
 - All Stripe webhook events are idempotently handled (same event ID processed twice is a no-op)
@@ -177,6 +190,7 @@ Total target: **launch-ready MVP in ~6 weeks** of focused build time.
 **Dependencies:** Phase 4
 
 **Deliverables**
+
 - Price-decay job (`decay-price`): runs every 5 minutes; steps each live listing's current price toward its floor per a deterministic decay curve (e.g. linear from list price to floor over departure − 4h to departure − 30min)
 - `expire-listing` job: marks unsold listings as expired at departure time; refunds any in-flight payment attempts; halts pending payouts
 - Operator scan-API integration sprint: for each of Megabus, FlixBus, National Express, Stagecoach, investigate whether an API exists to check whether a booking ref was scanned. Document coverage in `docs/OPERATOR_INTEGRATIONS.md`. Implement integration for the operator(s) that have usable endpoints.
@@ -184,6 +198,7 @@ Total target: **launch-ready MVP in ~6 weeks** of focused build time.
 - Cleanup job (`cleanup-orphaned-blobs`): daily; removes Vercel Blob files for withdrawn/rejected listings older than 7 days
 
 **Exit criteria**
+
 - A listing's current price visibly steps down on the browse feed as departure approaches
 - Where scan API exists, `release-payout` correctly holds payout when a ticket was not scanned + buyer claims they couldn't board
 - Documented operator coverage map so we know exactly what manual-review proportion to expect
@@ -199,6 +214,7 @@ Total target: **launch-ready MVP in ~6 weeks** of focused build time.
 **Dependencies:** Phase 4
 
 **Deliverables**
+
 - "Report a problem" button on every Transaction view
 - Claim sub-flow:
   - Reason selection: denied boarding (name check / already scanned / other), operator cancellation, ticket invalid, seller misconduct
@@ -214,6 +230,7 @@ Total target: **launch-ready MVP in ~6 weeks** of focused build time.
 - Audit log entries for every state transition
 
 **Exit criteria**
+
 - A test buyer files a denied-boarding claim; refund completes in test mode; seller payout is correctly halted; audit log shows the full trail
 - A second claim from the same buyer also auto-approves; a third routes to manual review
 - An operator-cancellation flow refunds the buyer without touching the guarantee fund
@@ -229,6 +246,7 @@ Total target: **launch-ready MVP in ~6 weeks** of focused build time.
 **Dependencies:** Phases 0–6 complete
 
 **Deliverables**
+
 - **Terms of Service** drafted (template + UK legal review) — covers seller obligations, buyer rights, guarantee policy, dispute procedure, prohibited conduct, account termination
 - **Privacy Policy + DPA** (UK GDPR / Data Protection Act 2018 compliant) — covers data collected, retention periods, third-party processors (Stripe, Clerk, Resend, Twilio, Vercel, Inngest, Sentry, PostHog), data subject rights
 - **Cookie banner** (only if non-essential cookies in use — likely just PostHog, so a banner is needed)
@@ -243,6 +261,7 @@ Total target: **launch-ready MVP in ~6 weeks** of focused build time.
 - Security review (internal or external) — at minimum: secrets audit, dependency CVE scan, Stripe webhook signature verification check, file-upload safety check
 
 **Exit criteria**
+
 - A buyer can complete a full transaction in production with real money and a real ticket
 - All legal documents are linked in the footer
 - An external user agent (eg. a friend testing) can complete signup → list ticket → buy ticket → use ticket → receive payout, with no developer intervention
@@ -258,6 +277,7 @@ Total target: **launch-ready MVP in ~6 weeks** of focused build time.
 **Dependencies:** Phase 7
 
 **Deliverables**
+
 - Invite waitlist signups (Phase 0) in batches of 50, prioritising those who registered route interest on the launch corridors
 - Reddit seeding: manual outreach to authors of "selling my coach ticket" posts on r/uktrains, r/UKPersonalFinance, r/london — offer to handle their listing
 - Student-society outreach: contact union event-organisers at universities served by the launch corridors during term-end week
@@ -268,6 +288,7 @@ Total target: **launch-ready MVP in ~6 weeks** of focused build time.
 - Iterate the price-decay curve based on observed sell-through
 
 **Exit criteria**
+
 - 100 completed transactions
 - Dispute rate < 5%
 - Guarantee fund draw < 2% of GMV
@@ -275,6 +296,7 @@ Total target: **launch-ready MVP in ~6 weeks** of focused build time.
 - No critical incidents in the final 7 days
 
 **Decision point:** at end of Phase 8, decide:
+
 - Open to public + invest in growth?
 - Iterate on a specific friction point?
 - Expand inventory (add a 6th corridor, or begin rail Advance with operator partnership)?
@@ -310,11 +332,11 @@ Real elapsed time will be longer with normal life. **Six contiguous build weeks 
 
 ## Risks and mitigations
 
-| Risk | Likelihood | Impact | Mitigation |
-|---|---|---|---|
-| PDF parsing fragile across operator format changes | High | Medium | Parser-registry pattern, "ambiguous → manual review" fallback, monitoring on parse confidence scores |
-| Operator cease-and-desist | Medium | High | Coach-only at launch is the primary mitigation; have a legal-response plan ready; lean on consumer-rights framing |
-| Cold start fails on launch corridors | Medium | High | Waitlist seeding from Phase 0; aggressive Reddit + student outreach; willing to operate with very low liquidity for 6+ weeks |
-| Stripe Identity friction drops sellers | Medium | Medium | Gating at first payout not signup softens this; monitor drop-off rate, consider relaxing to first listing if it's hurting badly |
-| Guarantee fund draw exceeds buyer fee revenue | Low | High | Buyer fee model has 8% margin built in; if fund draw spikes, tighten claim policy + investigate fraud patterns |
-| Single-vendor outage (Stripe, Clerk, Vercel) | Low | High | Accept the risk at MVP; document recovery procedures; multi-region / vendor redundancy is a v2 problem |
+| Risk                                               | Likelihood | Impact | Mitigation                                                                                                                      |
+| -------------------------------------------------- | ---------- | ------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| PDF parsing fragile across operator format changes | High       | Medium | Parser-registry pattern, "ambiguous → manual review" fallback, monitoring on parse confidence scores                            |
+| Operator cease-and-desist                          | Medium     | High   | Coach-only at launch is the primary mitigation; have a legal-response plan ready; lean on consumer-rights framing               |
+| Cold start fails on launch corridors               | Medium     | High   | Waitlist seeding from Phase 0; aggressive Reddit + student outreach; willing to operate with very low liquidity for 6+ weeks    |
+| Stripe Identity friction drops sellers             | Medium     | Medium | Gating at first payout not signup softens this; monitor drop-off rate, consider relaxing to first listing if it's hurting badly |
+| Guarantee fund draw exceeds buyer fee revenue      | Low        | High   | Buyer fee model has 8% margin built in; if fund draw spikes, tighten claim policy + investigate fraud patterns                  |
+| Single-vendor outage (Stripe, Clerk, Vercel)       | Low        | High   | Accept the risk at MVP; document recovery procedures; multi-region / vendor redundancy is a v2 problem                          |

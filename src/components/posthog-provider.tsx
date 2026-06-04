@@ -37,7 +37,9 @@ function PageviewTracker() {
 
     const qs = searchParams?.toString();
     const url = qs ? `${pathname}?${qs}` : pathname;
-    posthog.capture("$pageview", { $current_url: window.location.origin + url });
+    posthog.capture("$pageview", {
+      $current_url: window.location.origin + url,
+    });
   }, [pathname, searchParams]);
 
   return null;

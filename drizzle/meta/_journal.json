@@ -8,6 +8,13 @@
       "when": 1780518509083,
       "tag": "0000_numerous_wind_dancer",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1780599061629,
+      "tag": "0001_fixed_annihilus",
+      "breakpoints": true
     }
   ]
 }

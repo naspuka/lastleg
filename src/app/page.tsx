@@ -20,7 +20,7 @@ export default function HomePage() {
         <Routes />
         <section
           id="waitlist-section"
-          className="border-t border-border/60 bg-background"
+          className="border-border/60 bg-background border-t"
         >
           <div className="mx-auto max-w-3xl px-6 py-20 sm:py-24">
             <FadeUp>

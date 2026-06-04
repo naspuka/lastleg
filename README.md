@@ -27,14 +27,14 @@ See [`docs/DECISIONS.md`](docs/DECISIONS.md) for the full set of product decisio
 
 ## Documents
 
-| Doc | Purpose |
-|---|---|
-| [`docs/DECISIONS.md`](docs/DECISIONS.md) | Every product/architecture decision, with context and rationale |
-| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | System design, data model, key flows, integrations |
-| [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) | Phased build plan from landing page to launch |
-| [`docs/TASKS.md`](docs/TASKS.md) | Actionable task breakdown grouped by phase |
-| [`docs/SETUP.md`](docs/SETUP.md) | Step-by-step from clone to first production deploy |
-| [`docs/LANDING_WIREFRAME.md`](docs/LANDING_WIREFRAME.md) | Landing-page wireframe and copy |
+| Doc                                                          | Purpose                                                         |
+| ------------------------------------------------------------ | --------------------------------------------------------------- |
+| [`docs/DECISIONS.md`](docs/DECISIONS.md)                     | Every product/architecture decision, with context and rationale |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)               | System design, data model, key flows, integrations              |
+| [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) | Phased build plan from landing page to launch                   |
+| [`docs/TASKS.md`](docs/TASKS.md)                             | Actionable task breakdown grouped by phase                      |
+| [`docs/SETUP.md`](docs/SETUP.md)                             | Step-by-step from clone to first production deploy              |
+| [`docs/LANDING_WIREFRAME.md`](docs/LANDING_WIREFRAME.md)     | Landing-page wireframe and copy                                 |
 
 ## Status
 

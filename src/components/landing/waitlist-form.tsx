@@ -23,7 +23,7 @@ function SubmitButton() {
     <Button
       type="submit"
       size="lg"
-      className="w-full h-12 bg-brand-coral text-brand-coral-foreground hover:bg-brand-coral-hover border-brand-coral text-base"
+      className="bg-brand-coral text-brand-coral-foreground hover:bg-brand-coral-hover border-brand-coral h-12 w-full text-base"
       disabled={pending}
     >
       {pending ? "Joining…" : "Join the waitlist"}
@@ -34,7 +34,7 @@ function SubmitButton() {
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
   return (
-    <p className="text-destructive text-sm mt-1" role="alert">
+    <p className="text-destructive mt-1 text-sm" role="alert">
       {message}
     </p>
   );
@@ -68,10 +68,10 @@ export function WaitlistForm() {
     return (
       <Card
         id="waitlist"
-        className="mx-auto w-full max-w-lg border-primary/20 shadow-lg shadow-primary/5"
+        className="border-primary/20 shadow-primary/5 mx-auto w-full max-w-lg shadow-lg"
       >
-        <CardContent className="py-12 text-center space-y-4">
-          <div className="mx-auto grid size-12 place-content-center rounded-full bg-primary/10 text-primary">
+        <CardContent className="space-y-4 py-12 text-center">
+          <div className="bg-primary/10 text-primary mx-auto grid size-12 place-content-center rounded-full">
             <svg
               width="22"
               height="22"
@@ -104,7 +104,7 @@ export function WaitlistForm() {
   return (
     <Card
       id="waitlist"
-      className="mx-auto w-full max-w-lg border-border shadow-xl shadow-primary/5"
+      className="border-border shadow-primary/5 mx-auto w-full max-w-lg shadow-xl"
     >
       <CardHeader>
         <CardTitle className="font-heading text-3xl font-semibold tracking-tight">
@@ -157,7 +157,8 @@ export function WaitlistForm() {
 
           <fieldset className="space-y-3">
             <legend className="text-sm font-medium">
-              I&rsquo;m interested in… <span className="text-destructive">*</span>
+              I&rsquo;m interested in…{" "}
+              <span className="text-destructive">*</span>
             </legend>
             <RadioGroup name="role" defaultValue={prevRole || undefined}>
               {(
@@ -170,7 +171,7 @@ export function WaitlistForm() {
                 <Label
                   key={opt.value}
                   htmlFor={`role-${opt.value}`}
-                  className="flex items-center gap-3 font-normal cursor-pointer"
+                  className="flex cursor-pointer items-center gap-3 font-normal"
                 >
                   <RadioGroupItem id={`role-${opt.value}`} value={opt.value} />
                   <span>{opt.label}</span>
@@ -189,7 +190,7 @@ export function WaitlistForm() {
                 <Label
                   key={route.slug}
                   htmlFor={`route-${route.slug}`}
-                  className="flex items-center gap-3 font-normal cursor-pointer"
+                  className="flex cursor-pointer items-center gap-3 font-normal"
                 >
                   <Checkbox
                     id={`route-${route.slug}`}
@@ -200,7 +201,7 @@ export function WaitlistForm() {
                   <span>
                     {route.label}
                     {route.provisional && (
-                      <span className="text-muted-foreground text-xs ml-2">
+                      <span className="text-muted-foreground ml-2 text-xs">
                         (or Liverpool — TBD)
                       </span>
                     )}
@@ -213,7 +214,7 @@ export function WaitlistForm() {
 
           <SubmitButton />
 
-          <p className="text-muted-foreground text-xs text-center">
+          <p className="text-muted-foreground text-center text-xs">
             By joining you agree to our{" "}
             <a href="/privacy" className="underline underline-offset-2">
               privacy notice

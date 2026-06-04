@@ -16,7 +16,12 @@ type Props = {
 // Subtle one-shot fade-and-rise as the element enters the viewport. We use
 // IntersectionObserver + a CSS transition instead of a motion library so the
 // landing page doesn't pull a runtime dep just for this effect.
-export function FadeUp({ children, className, delay = 0, durationMs = 600 }: Props) {
+export function FadeUp({
+  children,
+  className,
+  delay = 0,
+  durationMs = 600,
+}: Props) {
   const ref = useRef<HTMLDivElement | null>(null);
   const [visible, setVisible] = useState(false);
 
@@ -44,8 +49,8 @@ export function FadeUp({ children, className, delay = 0, durationMs = 600 }: Pro
     <div
       ref={ref}
       className={cn(
-        "transition-[opacity,transform] ease-out will-change-[opacity,transform] motion-reduce:transition-none motion-reduce:opacity-100 motion-reduce:translate-y-0",
-        visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
+        "transition-[opacity,transform] ease-out will-change-[opacity,transform] motion-reduce:translate-y-0 motion-reduce:opacity-100 motion-reduce:transition-none",
+        visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0",
         className
       )}
       style={{

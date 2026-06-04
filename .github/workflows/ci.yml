@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel any in-flight CI for the same ref when a new commit lands. Saves
+# minutes on rapid pushes and keeps PR status accurate to the latest commit.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Typecheck · lint · format · build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    # Pin Node + pnpm to match local + Vercel runtime so CI is a true
+    # pre-flight. The pnpm major is sourced from packageManager once we add
+    # one — for now we set it explicitly via action input.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        # --frozen-lockfile fails if pnpm-lock.yaml is out of sync with
+        # package.json — catches a class of "I added a dep but forgot to
+        # commit the lock" mistakes before they reach main.
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Format check
+        run: pnpm format:check
+
+      - name: Drizzle schema check
+        # Catches drift between the Drizzle TS schema and the committed
+        # migration SQL. If a developer changes schema/*.ts without running
+        # `pnpm db:generate`, this fails.
+        run: pnpm exec drizzle-kit check
+
+      - name: Build
+        # Build is the integration test for everything above: TS errors that
+        # only surface during Next.js compilation, missing exports, broken
+        # imports across server/client boundaries, etc.
+        run: pnpm build
+        env:
+          # The build needs SOME metadataBase URL to construct OG URLs. We
+          # don't actually deploy from this job; this just avoids the
+          # localhost fallback flagging a warning.
+          VERCEL_PROJECT_PRODUCTION_URL: ci.example.com
