@@ -1,12 +1,30 @@
 # Setup
 
-Step-by-step from a fresh clone to a deployed landing page at your production
-domain. Each section corresponds to one or more Phase 0 tasks in
-[`TASKS.md`](TASKS.md). Work through them in order — later steps depend on
-earlier ones.
+Step-by-step from a fresh clone to a deployed landing page. Each section
+corresponds to one or more Phase 0 tasks in [`TASKS.md`](TASKS.md). Work
+through them in order — later steps depend on earlier ones.
+
+> **Cost posture:** Phase 0 runs at **£0/month** on the free tiers of every
+> service below. The only thing that costs money is registering a domain
+> (~£14/year), and we explicitly defer that until there's a reason to spend.
+> Until then, the app lives at the auto-generated `*.vercel.app` URL.
 
 If you get stuck, the [`DECISIONS.md`](DECISIONS.md) entries explain *why*
 each service was chosen.
+
+## Quick-start (£0 path)
+
+If you just want the landing page live with persisting signups and analytics,
+do these three sections and skip the rest:
+
+1. [§1 Local dev](#1-local-dev-no-external-services) — boot the app locally
+2. [§3 Neon Postgres](#3-provision-neon-postgres--p0-04) — so signups persist
+3. [§4 Vercel](#4-vercel-project--connect-domain--p0-02) — deploy
+4. [§6 PostHog](#6-posthog-analytics--p0-11) — so you know who's signing up
+
+The domain (§2), Resend email (§5), and custom-domain DNS routing are all
+deferred until you decide to spend. The code is already wired for them so
+they activate the moment you paste keys in.
 
 ---
 
@@ -50,7 +68,11 @@ green. CI will enforce this in P1-17.
 
 ---
 
-## 2. Register the domain — P0-01
+## 2. Register the domain — P0-01 *(deferred)*
+
+> **Skip this section for now** — the £0 path uses the Vercel-provided
+> subdomain like `lastleg-azure.vercel.app`. Come back here when you decide
+> to commit to the project.
 
 We're going with `lastleg.app`. If it's taken, pick something close
 (`lastleg.uk`, `lastleg.co`, `getlastleg.com`) — anything where you control
@@ -137,7 +159,17 @@ includes 500 MB storage, plenty for the waitlist + early MVP usage.
 
 ---
 
-## 5. Resend transactional email — P0-10
+## 5. Resend transactional email — P0-10 *(deferred until domain)*
+
+> **Skip this section for now.** Resend's free tier won't send to real
+> visitors until you have a verified sender domain. The waitlist works fine
+> without a confirmation email — the DB still captures everyone. Re-engage
+> these signups later via a bulk send (Mailchimp, Buttondown, etc.) when
+> you're ready to invite them.
+>
+> If you genuinely want confirmation emails before a domain is registered,
+> Brevo's free tier lets you verify a single personal email as sender; ask
+> Claude to swap the Resend integration for Brevo.
 
 [Resend](https://resend.com) handles the signup confirmation email and (later)
 all transactional email.
