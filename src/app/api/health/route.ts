@@ -20,6 +20,21 @@ export async function GET() {
     NEXT_PUBLIC_POSTHOG_HOST: Boolean(process.env.NEXT_PUBLIC_POSTHOG_HOST),
     RESEND_API_KEY: Boolean(process.env.RESEND_API_KEY),
     RESEND_FROM: Boolean(process.env.RESEND_FROM),
+    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: Boolean(
+      process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+    ),
+    CLERK_SECRET_KEY: Boolean(process.env.CLERK_SECRET_KEY),
+    CLERK_WEBHOOK_SIGNING_SECRET: Boolean(
+      process.env.CLERK_WEBHOOK_SIGNING_SECRET
+    ),
+    NEXT_PUBLIC_CLERK_SIGN_IN_URL: Boolean(
+      process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL
+    ),
+    NEXT_PUBLIC_CLERK_SIGN_UP_URL: Boolean(
+      process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL
+    ),
+    INNGEST_EVENT_KEY: Boolean(process.env.INNGEST_EVENT_KEY),
+    INNGEST_SIGNING_KEY: Boolean(process.env.INNGEST_SIGNING_KEY),
   };
 
   let db: {
