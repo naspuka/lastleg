@@ -5,16 +5,12 @@ import { trackServerEvent } from "@/lib/analytics/posthog-server";
 import { sendWaitlistConfirmation } from "@/lib/email/waitlist-confirmation";
 import { waitlistSchema, type WaitlistInput } from "@/lib/waitlist-schema";
 
-export type WaitlistState =
-  | { status: "idle" }
-  | { status: "ok" }
-  | {
-      status: "error";
-      fieldErrors: Partial<Record<keyof WaitlistInput, string>>;
-      values: { email: string; phone: string; role: string; routes: string[] };
-    };
+import type { WaitlistState } from "./waitlist-types";
 
-export const initialWaitlistState: WaitlistState = { status: "idle" };
+// IMPORTANT: a "use server" file can only export async functions per Next.js
+// 16's strict runtime check (otherwise `A "use server" file can only export
+// async functions, found object`). Types and the initialWaitlistState
+// constant live in ./waitlist-types.ts.
 
 // Per the wireframe rule: on duplicate email we treat the response as success
 // so we don't leak whether an address is already on the list. Insert uses
