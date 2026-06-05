@@ -33,6 +33,12 @@ export async function GET() {
     NEXT_PUBLIC_CLERK_SIGN_UP_URL: Boolean(
       process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL
     ),
+    NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL: Boolean(
+      process.env.NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL
+    ),
+    NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL: Boolean(
+      process.env.NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL
+    ),
     INNGEST_EVENT_KEY: Boolean(process.env.INNGEST_EVENT_KEY),
     INNGEST_SIGNING_KEY: Boolean(process.env.INNGEST_SIGNING_KEY),
   };

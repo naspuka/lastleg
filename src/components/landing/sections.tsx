@@ -22,26 +22,32 @@ import { cn } from "@/lib/utils";
 import { FadeUp } from "./fade-up";
 import { TicketIllustration } from "./ticket-illustration";
 
+import { NavAuth } from "./nav-auth";
+
 export function Nav() {
   return (
     <header className="border-border/60 bg-background/80 sticky top-0 z-30 w-full border-b backdrop-blur-sm">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
         <Link
           href="/"
           className="font-heading text-primary text-xl font-semibold tracking-tight"
         >
           LastLeg
         </Link>
-        <a
-          href="#waitlist"
-          className={cn(
-            buttonVariants({ size: "sm" }),
-            "bg-brand-coral text-brand-coral-foreground hover:bg-brand-coral-hover border-brand-coral"
-          )}
-        >
-          Join the waitlist
-          <ArrowRight className="size-3.5" />
-        </a>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <NavAuth />
+          <a
+            href="#waitlist"
+            className={cn(
+              buttonVariants({ size: "sm" }),
+              "bg-brand-coral text-brand-coral-foreground hover:bg-brand-coral-hover border-brand-coral"
+            )}
+          >
+            <span className="hidden sm:inline">Join the waitlist</span>
+            <span className="sm:hidden">Waitlist</span>
+            <ArrowRight className="size-3.5" />
+          </a>
+        </div>
       </div>
     </header>
   );
