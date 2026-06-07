@@ -41,6 +41,7 @@ export async function GET() {
     ),
     INNGEST_EVENT_KEY: Boolean(process.env.INNGEST_EVENT_KEY),
     INNGEST_SIGNING_KEY: Boolean(process.env.INNGEST_SIGNING_KEY),
+    BLOB_READ_WRITE_TOKEN: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
   };
 
   let db: {

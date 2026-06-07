@@ -278,6 +278,28 @@ OTP per D015.
 Verify: sign up with a test account, then check Neon — there should be a
 new `users` row with your `clerk_user_id`, email, derived handle.
 
+## 10. Vercel Blob — P2-10 _(do when shipping seller flow)_
+
+[Vercel Blob](https://vercel.com/docs/storage/vercel-blob) stores uploaded
+ticket PDFs. Free tier covers MVP traffic; tokens are project-scoped.
+
+1. Vercel dashboard → your `lastleg-azure` project → **Storage** tab
+2. **Create** → **Blob** → name `lastleg-tickets`, region `iad1` (matches Neon)
+3. Connect to the project. Vercel auto-injects `BLOB_READ_WRITE_TOKEN` into
+   Production + Preview env vars for you.
+4. For local dev: copy the token from Project Settings → Environment Variables
+   into `.env.local` as `BLOB_READ_WRITE_TOKEN`.
+
+Verify: list a ticket via `/sell/new`. The Listing row in `listings` should
+have a non-null `ticket_pdf_blob_url` pointing at `https://*.public.blob.vercel-storage.com/...`.
+
+> Without this token configured, the seller flow still works — the listing
+> persists, the verify-listing job runs against an empty blob URL, and the
+> stub parser accepts the form-entered values. The real per-operator parsers
+> in P2-04+ will require the upload to be successful.
+
+---
+
 ## 9. Inngest background jobs — P1-14 _(do when shipping seller flow)_
 
 [Inngest](https://app.inngest.com) runs our background jobs (verify-listing,
