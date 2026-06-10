@@ -40,6 +40,10 @@ yarn-error.log*
 # claude code per-user settings
 .claude/settings.local.json
 
+# Local one-off dev scripts (PDF parser tests, etc.). Excluded from the
+# repo because they reference paths on the developer's machine.
+/scripts/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

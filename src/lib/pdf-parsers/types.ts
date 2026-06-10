@@ -1,5 +1,3 @@
-import type { z } from "zod";
-
 import type { operatorEnum } from "@/db/schema/enums";
 
 // Operator enum values mirrored as a literal-string union so the rest of the
@@ -13,7 +11,16 @@ export type Operator = (typeof operatorEnum.enumValues)[number];
 // Money in pence per the conventions doc. Dates in UTC.
 export type ParsedTicket = {
   operator: Operator;
+  // The unique per-passenger ticket identifier (Distribusion's `Ticket #`,
+  // e.g. `ETS20686328`). This is what the dup-detection invariant (operator,
+  // booking_reference) UNIQUE index uses. NOTE: despite the column being
+  // called `booking_reference`, we store the ticket # because that's what
+  // makes each piece of inventory uniquely identifiable.
   bookingReference?: string | null;
+  // Operator-side booking group id (Distribusion's `Booking #`,
+  // e.g. `22520239`). Shared by every passenger on the same booking — used
+  // to link siblings when we auto-split a multi-passenger PDF.
+  bookingGroupId?: string | null;
   routeOrigin?: string | null;
   routeDestination?: string | null;
   departureAt?: Date | null;
@@ -27,13 +34,12 @@ export type ParsedTicket = {
   warnings?: string[];
 };
 
-// Input to every parser. The Blob URL is short-TTL; parsers must read it
-// during the call window, not save it for later.
+// Input to every parser. Either a public blob URL the parser fetches, or
+// raw bytes (used in tests + the same-request shortcut where the server
+// action already has the file in memory).
 export type ParserInput = {
-  blobUrl: string;
-  // The seller-entered values from the form. The real parsers will treat
-  // these as hints + cross-check against the PDF; the stub parser uses them
-  // verbatim because there's no actual PDF read happening yet.
+  blobUrl?: string;
+  bytes?: Uint8Array;
   hints: {
     operator: Operator;
     bookingReference?: string;
@@ -46,10 +52,9 @@ export type ParserInput = {
   };
 };
 
-export type Parser = (input: ParserInput) => Promise<ParsedTicket>;
-
-// Convenience for Zod schemas referencing the operator enum without
-// duplicating its values.
-export type ZodOperator = z.ZodEnum<{
-  [K in Operator]: K;
-}>;
+// Parsers return an ARRAY because Distribusion-style PDFs can carry
+// multiple passenger tickets in one file. A single-ticket PDF returns a
+// 1-element array. The verify-listing job decides what to do with extras:
+// today it picks the one that matches the seller's form-entered ticket
+// number; later it'll auto-split into sibling listings.
+export type Parser = (input: ParserInput) => Promise<ParsedTicket[]>;

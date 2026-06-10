@@ -10,34 +10,38 @@ import { inngest } from "../client";
 // Triggered when /sell/new creates a Listing in `pending_verification`.
 // Stages:
 //   1. Load the listing row + its seller-entered hints.
-//   2. Dispatch to the operator parser via the registry (P2-05). Today
-//      that's always the stub; real per-operator parsers slot in once we
-//      have sample PDFs (P2-04/06/07/08).
-//   3. DB dup check on (operator, booking_reference) against
-//      operator_tickets. The unique index catches it too — we check first
-//      so we can fail with a friendly reason instead of a DB exception.
-//   4. Insert OperatorTicket, flip listing → live, copy
-//      current_price_pence = list_price_pence, set expires_at =
-//      departure_at.
-//   5. Audit log everything.
+//   2. Parse the PDF via the registry. Real parsers (Distribusion etc.)
+//      return an ARRAY of tickets — multi-passenger PDFs carry one entry
+//      per passenger.
+//   3. Find the "primary" parsed ticket whose ticket number matches the
+//      seller's form-entered booking_reference. That ticket drives this
+//      Listing.
+//   4. Auto-split: for every OTHER parsed ticket above confidence, create a
+//      sibling Listing under the same seller with the same prices but its
+//      own ticket number + passenger name. Each sibling gets its own
+//      operator_ticket row, dup-check, and audit trail.
+//   5. DB dup check on (operator, booking_reference) per ticket. Unique
+//      index is the ultimate safety net.
+//   6. Status transitions + audit log for the primary + every sibling.
 //
-// Confidence < 0.5 → listing stays `pending_verification` and the seller
-// sees a "we couldn't auto-verify this — manual review queued" message.
-// Confidence >= 0.5 → auto-publish to `live`.
-//
-// Idempotency: each step.run() is keyed so re-runs (Inngest retries) don't
-// double-write. The operator_tickets unique index is the ultimate safety
-// net.
+// Confidence < 0.5 on the primary → listing stays `pending_verification`
+// for manual review. Siblings with confidence < 0.5 are silently skipped.
 
 const AUTO_PUBLISH_THRESHOLD = 0.5;
+
+type ParsedTicketSerialised = Omit<
+  Awaited<ReturnType<typeof parseTicket>>[number],
+  "departureAt"
+> & {
+  departureAt: string | null;
+};
 
 export const verifyListing = inngest.createFunction(
   {
     id: "verify-listing",
     triggers: [{ event: "listing/verify-requested" }],
-    // Concurrency: keep one verification per listing in flight. A second
-    // trigger for the same listing waits, preventing dup OperatorTicket
-    // inserts under retry storms.
+    // Concurrency: one verification per listing in flight. Stops retry
+    // storms from double-inserting operator_tickets / sibling listings.
     concurrency: {
       key: "event.data.listingId",
       limit: 1,
@@ -59,7 +63,6 @@ export const verifyListing = inngest.createFunction(
       return row;
     });
 
-    // Skip if someone already moved this listing past pending_verification.
     if (listing.status !== "pending_verification") {
       return {
         skipped: true,
@@ -67,15 +70,11 @@ export const verifyListing = inngest.createFunction(
       };
     }
 
-    // Inngest serializes step return values via JSON, so Date fields come
-    // back as ISO strings. We work with strings on the listing's
-    // departure-time and re-hydrate to a Date only when the parser API
-    // requires it.
     const departureAtMs = new Date(listing.departureAt).getTime();
 
     const parsed = await step.run("parse-pdf", async () => {
       const result = await parseTicket({
-        blobUrl: listing.ticketPdfBlobUrl ?? "",
+        blobUrl: listing.ticketPdfBlobUrl ?? undefined,
         hints: {
           operator: listing.operator,
           bookingReference: listing.bookingReference ?? undefined,
@@ -87,17 +86,22 @@ export const verifyListing = inngest.createFunction(
           passengerNameFirst: listing.passengerNameFirst ?? undefined,
         },
       });
-      return {
-        ...result,
-        // Pre-serialise Date so the downstream Jsonify type is stable.
-        departureAt: result.departureAt
-          ? result.departureAt.toISOString()
-          : null,
-      };
+      return result.map((t) => ({
+        ...t,
+        departureAt: t.departureAt ? t.departureAt.toISOString() : null,
+      })) as ParsedTicketSerialised[];
     });
 
-    // Low confidence — leave in pending_verification for manual review.
-    if (parsed.confidence < AUTO_PUBLISH_THRESHOLD) {
+    // Locate the "primary" ticket: the one whose extracted ticket #
+    // matches what the seller typed in the form. If the parser didn't find
+    // any match, fall back to the highest-confidence parsed ticket.
+    const sellerBookingRef = listing.bookingReference?.toUpperCase();
+    const primary =
+      parsed.find(
+        (t) => t.bookingReference?.toUpperCase() === sellerBookingRef
+      ) ?? parsed.toSorted((a, b) => b.confidence - a.confidence)[0];
+
+    if (!primary || primary.confidence < AUTO_PUBLISH_THRESHOLD) {
       await step.run("audit-low-confidence", async () => {
         const db = getDb();
         if (!db) return;
@@ -107,17 +111,20 @@ export const verifyListing = inngest.createFunction(
           entityType: "listing",
           entityId: listing.id,
           payload: {
-            confidence: parsed.confidence,
-            warnings: parsed.warnings ?? [],
+            confidence: primary?.confidence ?? 0,
+            warnings: primary?.warnings ?? [],
+            ticketsFound: parsed.length,
           },
         });
       });
-      return { status: "manual_review_queued", confidence: parsed.confidence };
+      return {
+        status: "manual_review_queued",
+        confidence: primary?.confidence ?? 0,
+        ticketsFound: parsed.length,
+      };
     }
 
-    if (!parsed.bookingReference) {
-      // We cannot enforce dup-detection without a booking reference. Park
-      // for manual review.
+    if (!primary.bookingReference) {
       await step.run("audit-missing-booking-ref", async () => {
         const db = getDb();
         if (!db) return;
@@ -132,10 +139,8 @@ export const verifyListing = inngest.createFunction(
       return { status: "manual_review_queued", reason: "no booking ref" };
     }
 
-    // Dup-check + insert OperatorTicket + transition listing in a single
-    // logical step. The (operator, booking_ref) unique index is the
-    // safety net if a race slips through.
-    const result = await step.run("publish-or-reject", async () => {
+    // Publish the primary first — this is the listing the seller submitted.
+    const primaryResult = await step.run("publish-primary", async () => {
       const db = getDb();
       if (!db) throw new Error("DB not configured");
 
@@ -144,10 +149,10 @@ export const verifyListing = inngest.createFunction(
         .from(schema.operatorTickets)
         .where(
           and(
-            eq(schema.operatorTickets.operator, parsed.operator),
+            eq(schema.operatorTickets.operator, primary.operator),
             eq(
               schema.operatorTickets.bookingReference,
-              parsed.bookingReference!
+              primary.bookingReference!
             )
           )
         )
@@ -169,8 +174,8 @@ export const verifyListing = inngest.createFunction(
           entityType: "listing",
           entityId: listing.id,
           payload: {
-            operator: parsed.operator,
-            bookingReference: parsed.bookingReference,
+            operator: primary.operator,
+            bookingReference: primary.bookingReference,
             collisionOperatorTicketId: existing[0]!.id,
           },
         });
@@ -181,21 +186,40 @@ export const verifyListing = inngest.createFunction(
       const operatorTicketRows = await db
         .insert(schema.operatorTickets)
         .values({
-          operator: parsed.operator,
-          bookingReference: parsed.bookingReference!,
+          operator: primary.operator,
+          bookingReference: primary.bookingReference!,
           firstSeenListingId: listing.id,
           status: "live",
         })
         .returning({ id: schema.operatorTickets.id });
       const operatorTicketId = operatorTicketRows[0]?.id;
 
+      // The PDF is authoritative on operator-side data. Trust parsed route
+      // and departure over seller-entered fields. Original price comes from
+      // the parsed value too — closes the "I paid £100 actually" gap a bit
+      // (real receipt-email cross-check still ships in P2-14/15).
+      const parsedDeparture = primary.departureAt
+        ? new Date(primary.departureAt)
+        : new Date(departureAtMs);
+
       await db
         .update(schema.listings)
         .set({
           status: "live",
           verificationStatus: "pdf_parsed",
+          operator: primary.operator,
+          routeOrigin: primary.routeOrigin ?? listing.routeOrigin,
+          routeDestination:
+            primary.routeDestination ?? listing.routeDestination,
+          departureAt: parsedDeparture,
+          originalPricePence:
+            primary.originalPricePence ?? listing.originalPricePence,
           currentPricePence: listing.listPricePence,
-          expiresAt: new Date(departureAtMs),
+          hasPassengerName:
+            primary.hasPassengerName ?? listing.hasPassengerName,
+          passengerNameFirst:
+            primary.passengerNameFirst ?? listing.passengerNameFirst,
+          expiresAt: parsedDeparture,
           updatedAt: new Date(),
         })
         .where(eq(schema.listings.id, listing.id));
@@ -207,14 +231,141 @@ export const verifyListing = inngest.createFunction(
         entityId: listing.id,
         payload: {
           operatorTicketId,
-          confidence: parsed.confidence,
-          parsed,
+          confidence: primary.confidence,
+          parsed: primary,
         },
       });
 
       return { status: "live" as const, operatorTicketId };
     });
 
-    return result;
+    // Auto-split: every other parsed ticket (siblings) becomes its own
+    // Listing under the same seller. Each runs through the same dup-check
+    // before being inserted. Failures are non-fatal to the primary — they
+    // just don't create a sibling.
+    const siblings = parsed.filter(
+      (t) =>
+        t.bookingReference &&
+        t.bookingReference.toUpperCase() !==
+          primary.bookingReference!.toUpperCase() &&
+        t.confidence >= AUTO_PUBLISH_THRESHOLD
+    );
+
+    const siblingResults: Array<{
+      bookingReference: string;
+      status: "live" | "duplicate_skipped" | "error";
+      listingId?: string;
+      error?: string;
+    }> = [];
+
+    for (const sibling of siblings) {
+      const sibResult = await step.run(
+        `publish-sibling-${sibling.bookingReference}`,
+        async () => {
+          const db = getDb();
+          if (!db) throw new Error("DB not configured");
+
+          // Same operator-ticket dup-check as primary.
+          const existing = await db
+            .select({ id: schema.operatorTickets.id })
+            .from(schema.operatorTickets)
+            .where(
+              and(
+                eq(schema.operatorTickets.operator, sibling.operator),
+                eq(
+                  schema.operatorTickets.bookingReference,
+                  sibling.bookingReference!
+                )
+              )
+            )
+            .limit(1);
+
+          if (existing.length > 0) {
+            await db.insert(schema.auditLog).values({
+              actorUserId: null,
+              action: "listing.sibling_duplicate_skipped",
+              entityType: "listing",
+              entityId: listing.id, // attach to the primary for the timeline
+              payload: {
+                operator: sibling.operator,
+                bookingReference: sibling.bookingReference,
+              },
+            });
+            return {
+              bookingReference: sibling.bookingReference!,
+              status: "duplicate_skipped" as const,
+            };
+          }
+
+          const parsedDeparture = sibling.departureAt
+            ? new Date(sibling.departureAt)
+            : new Date(departureAtMs);
+
+          // Mint a sibling Listing — same seller, same prices, parsed
+          // route + passenger from the PDF.
+          const siblingListingRows = await db
+            .insert(schema.listings)
+            .values({
+              sellerId: listing.sellerId,
+              operator: sibling.operator,
+              routeOrigin: sibling.routeOrigin ?? listing.routeOrigin,
+              routeDestination:
+                sibling.routeDestination ?? listing.routeDestination,
+              departureAt: parsedDeparture,
+              originalPricePence:
+                sibling.originalPricePence ?? listing.originalPricePence,
+              listPricePence: listing.listPricePence,
+              floorPricePence: listing.floorPricePence,
+              currentPricePence: listing.listPricePence,
+              bookingReference: sibling.bookingReference!,
+              hasPassengerName: sibling.hasPassengerName ?? false,
+              passengerNameFirst: sibling.passengerNameFirst ?? null,
+              ticketPdfBlobUrl: listing.ticketPdfBlobUrl,
+              status: "live",
+              verificationStatus: "pdf_parsed",
+              expiresAt: parsedDeparture,
+            })
+            .returning({ id: schema.listings.id });
+
+          const sibListingId = siblingListingRows[0]!.id;
+
+          const opTicketRows = await db
+            .insert(schema.operatorTickets)
+            .values({
+              operator: sibling.operator,
+              bookingReference: sibling.bookingReference!,
+              firstSeenListingId: sibListingId,
+              status: "live",
+            })
+            .returning({ id: schema.operatorTickets.id });
+
+          await db.insert(schema.auditLog).values({
+            actorUserId: null,
+            action: "listing.published_sibling",
+            entityType: "listing",
+            entityId: sibListingId,
+            payload: {
+              parentListingId: listing.id,
+              operatorTicketId: opTicketRows[0]?.id,
+              confidence: sibling.confidence,
+              parsed: sibling,
+            },
+          });
+
+          return {
+            bookingReference: sibling.bookingReference!,
+            status: "live" as const,
+            listingId: sibListingId,
+          };
+        }
+      );
+      siblingResults.push(sibResult);
+    }
+
+    return {
+      ...primaryResult,
+      siblings: siblingResults,
+      ticketsFound: parsed.length,
+    };
   }
 );

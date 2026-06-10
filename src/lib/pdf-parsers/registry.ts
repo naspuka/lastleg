@@ -1,31 +1,38 @@
+import { distribusionParser } from "./distribusion";
 import { stubParser } from "./stub-parser";
-import type { Operator, Parser, ParserInput } from "./types";
+import type { Parser, ParserInput, ParsedTicket } from "./types";
 
-// Operator → parser dispatch table per P2-05. Each operator gets its own
-// regex/heuristic parser as we acquire sample PDFs (P2-01/02). Until then
-// every operator uses the stub which returns the form-hints verbatim.
+// Parser dispatch per P2-05.
 //
-// Adding a new operator's parser:
-//   1. Add the operator value to operatorEnum (db/schema/enums.ts) + migration
-//   2. Write src/lib/pdf-parsers/<operator>.ts implementing the Parser type
-//   3. Wire it in here
-//   4. Add 5+ real-ticket fixtures to tests/fixtures/pdf-<operator>/
+// Strategy: try the Distribusion parser first. It white-labels for Megabus,
+// FlixBus, and several smaller operators, so a single deterministic parser
+// covers most UK coach inventory we'll see. If it can't identify the
+// format (confidence 0), fall back to per-operator parsers or, ultimately,
+// the stub.
 //
-// The fallback to stubParser ensures the registry never throws on an
-// unhandled operator — useful while we're staged-rolling per-operator
-// parsers without breaking other paths.
-const PARSERS: Record<Operator, Parser> = {
-  megabus: stubParser,
-  flixbus: stubParser,
-  national_express: stubParser,
-  stagecoach: stubParser,
-};
+// LLM fallback (Claude Haiku structured extraction) slots into the chain
+// here once we add it — between deterministic parsers and the stub.
 
-export async function parseTicket(input: ParserInput) {
-  const parser = PARSERS[input.hints.operator] ?? stubParser;
-  return parser(input);
+const PARSERS: Parser[] = [
+  distribusionParser,
+  // (national-express parser, stagecoach parser slot in here)
+  stubParser,
+];
+
+export async function parseTicket(input: ParserInput): Promise<ParsedTicket[]> {
+  // Try parsers in order. First one to come back with confidence > 0 on at
+  // least one ticket wins; otherwise fall through to the next.
+  for (const parser of PARSERS) {
+    const result = await parser(input);
+    if (result.some((t) => t.confidence > 0)) {
+      return result;
+    }
+  }
+  // All parsers refused — return stub's "passthrough" result so the
+  // verify-listing job has something to work with for manual review.
+  return stubParser(input);
 }
 
-export { stubParser };
-export type { Operator, Parser, ParserInput };
+export { stubParser, distribusionParser };
+export type { Operator, Parser, ParserInput } from "./types";
 export type { ParsedTicket } from "./types";
