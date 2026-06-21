@@ -1,4 +1,4 @@
-import { and, eq, gt, gte, lte, or, sql as drizzleSql } from "drizzle-orm";
+import { and, eq, gte, lte, or, sql as drizzleSql } from "drizzle-orm";
 
 import { getDb, schema } from "@/db/client";
 import { sendListingAlertEmail } from "@/lib/email/listing-alert";
@@ -164,10 +164,6 @@ export const matchAlerts = inngest.createFunction(
       });
       results.push(result);
     }
-
-    // Suppress unused warnings on the imports above when nobody overlaps —
-    // and (and gt) is intentionally importable as a hedge for future filters.
-    void gt;
 
     return {
       matched: results.length,

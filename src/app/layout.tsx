@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, Geist, Geist_Mono } from "next/font/google";
 
 import { AuthProvider } from "@/components/auth-provider";
+import { CookieBanner } from "@/components/cookie-banner";
 import { PostHogProvider } from "@/components/posthog-provider";
 
 import "./globals.css";
@@ -71,6 +72,7 @@ export default function RootLayout({
         <AuthProvider>
           <PostHogProvider>{children}</PostHogProvider>
         </AuthProvider>
+        <CookieBanner />
       </body>
     </html>
   );

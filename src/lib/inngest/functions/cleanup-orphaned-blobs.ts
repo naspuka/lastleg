@@ -1,4 +1,4 @@
-import { and, eq, inArray, lte, not, sql } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, lte } from "drizzle-orm";
 
 import { getDb, schema } from "@/db/client";
 
@@ -36,9 +36,9 @@ export const cleanupOrphanedBlobs = inngest.createFunction(
         .from(schema.listings)
         .where(
           and(
-            inArray(schema.listings.status, ["withdrawn", "rejected"]),
+            inArray(schema.listings.status, ["withdrawn", "rejected"] as const),
             lte(schema.listings.updatedAt, cutoff),
-            not(sql`${schema.listings.ticketPdfBlobUrl} IS NULL`)
+            isNotNull(schema.listings.ticketPdfBlobUrl)
           )
         )
         .limit(100);

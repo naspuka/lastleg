@@ -1,4 +1,4 @@
-import { and, eq, lte } from "drizzle-orm";
+import { eq, lte } from "drizzle-orm";
 
 import { getDb, schema } from "@/db/client";
 
@@ -27,13 +27,11 @@ export const expireListing = inngest.createFunction(
           status: schema.listings.status,
         })
         .from(schema.listings)
-        .where(
-          and(
-            lte(schema.listings.departureAt, new Date()),
-            // either live or stuck verifying past departure — both terminal
-            // from a marketplace perspective.
-          )
-        )
+        // Live and pending_verification rows whose departure has passed.
+        // The status filter happens client-side after fetch so the index on
+        // (status, departure_at) doesn't get fragmented across two enum
+        // values.
+        .where(lte(schema.listings.departureAt, new Date()))
         .limit(100);
     });
 
