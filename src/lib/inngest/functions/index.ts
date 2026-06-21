@@ -3,8 +3,12 @@
 // export, add it here. Phase 2+ adds verify-listing, release-ticket,
 // release-payout, match-alerts, etc.
 
+import { cleanupOrphanedBlobs } from "./cleanup-orphaned-blobs";
+import { decayPrice } from "./decay-price";
+import { expireListing } from "./expire-listing";
 import { healthCheck } from "./health-check";
 import { matchAlerts } from "./match-alerts";
+import { processClaim } from "./process-claim";
 import { reconcileStripe } from "./reconcile-stripe";
 import { releasePayout } from "./release-payout";
 import { releaseTicket } from "./release-ticket";
@@ -17,4 +21,8 @@ export const functions = [
   releaseTicket,
   releasePayout,
   reconcileStripe,
+  decayPrice,
+  expireListing,
+  cleanupOrphanedBlobs,
+  processClaim,
 ];

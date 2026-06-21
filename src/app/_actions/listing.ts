@@ -5,6 +5,7 @@ import { requireSession } from "@/lib/auth/session";
 import { uploadTicketPdf, BlobNotConfiguredError } from "@/lib/blob/client";
 import { inngest } from "@/lib/inngest/client";
 import { createListingSchema } from "@/lib/listing-schema";
+import { LIMITS, take } from "@/lib/rate-limit";
 
 import type {
   CreateListingFieldErrors,
@@ -30,6 +31,17 @@ export async function createListingAction(
     return {
       status: "error",
       fieldErrors: { operator: "You need to sign in to list a ticket." },
+      values: raw,
+    };
+  }
+
+  if (!take(`listing-create:${user.id}`, LIMITS.listingCreate)) {
+    return {
+      status: "error",
+      fieldErrors: {
+        operator:
+          "Too many listings today. The cap is 10 per user per 24 hours.",
+      },
       values: raw,
     };
   }
