@@ -18,16 +18,28 @@ export function AppNav() {
         </Link>
         <nav className="flex flex-1 items-center gap-1 sm:gap-2">
           <Link
-            href="/dashboard"
+            href="/browse"
             className="text-muted-foreground hover:text-foreground rounded-md px-2 py-1 text-sm font-medium transition-colors sm:px-3"
           >
-            Dashboard
+            Browse
           </Link>
           <Link
             href="/sell"
             className="text-muted-foreground hover:text-foreground rounded-md px-2 py-1 text-sm font-medium transition-colors sm:px-3"
           >
             Sell
+          </Link>
+          <Link
+            href="/alerts"
+            className="text-muted-foreground hover:text-foreground rounded-md px-2 py-1 text-sm font-medium transition-colors sm:px-3"
+          >
+            Alerts
+          </Link>
+          <Link
+            href="/dashboard"
+            className="text-muted-foreground hover:text-foreground hidden rounded-md px-2 py-1 text-sm font-medium transition-colors sm:inline sm:px-3"
+          >
+            Account
           </Link>
         </nav>
         <div className="flex items-center gap-3">

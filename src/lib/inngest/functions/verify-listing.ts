@@ -362,6 +362,25 @@ export const verifyListing = inngest.createFunction(
       siblingResults.push(sibResult);
     }
 
+    // Fire listing/published for every newly-live listing so match-alerts
+    // can fan out notifications. We send these as a batch after all DB
+    // mutations so we never publish before the row is committed.
+    const publishedIds: string[] = [];
+    if (primaryResult.status === "live") publishedIds.push(listing.id);
+    for (const r of siblingResults) {
+      if (r.status === "live" && r.listingId) publishedIds.push(r.listingId);
+    }
+    if (publishedIds.length > 0) {
+      await step.run("emit-published-events", async () => {
+        await inngest.send(
+          publishedIds.map((id) => ({
+            name: "listing/published",
+            data: { listingId: id },
+          }))
+        );
+      });
+    }
+
     return {
       ...primaryResult,
       siblings: siblingResults,

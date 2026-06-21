@@ -4,6 +4,7 @@
 // release-payout, match-alerts, etc.
 
 import { healthCheck } from "./health-check";
+import { matchAlerts } from "./match-alerts";
 import { verifyListing } from "./verify-listing";
 
-export const functions = [healthCheck, verifyListing];
+export const functions = [healthCheck, verifyListing, matchAlerts];
