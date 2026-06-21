@@ -5,6 +5,16 @@
 
 import { healthCheck } from "./health-check";
 import { matchAlerts } from "./match-alerts";
+import { reconcileStripe } from "./reconcile-stripe";
+import { releasePayout } from "./release-payout";
+import { releaseTicket } from "./release-ticket";
 import { verifyListing } from "./verify-listing";
 
-export const functions = [healthCheck, verifyListing, matchAlerts];
+export const functions = [
+  healthCheck,
+  verifyListing,
+  matchAlerts,
+  releaseTicket,
+  releasePayout,
+  reconcileStripe,
+];

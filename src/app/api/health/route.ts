@@ -42,6 +42,14 @@ export async function GET() {
     INNGEST_EVENT_KEY: Boolean(process.env.INNGEST_EVENT_KEY),
     INNGEST_SIGNING_KEY: Boolean(process.env.INNGEST_SIGNING_KEY),
     BLOB_READ_WRITE_TOKEN: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
+    STRIPE_SECRET_KEY: Boolean(process.env.STRIPE_SECRET_KEY),
+    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: Boolean(
+      process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+    ),
+    STRIPE_WEBHOOK_SECRET: Boolean(process.env.STRIPE_WEBHOOK_SECRET),
+    TWILIO_ACCOUNT_SID: Boolean(process.env.TWILIO_ACCOUNT_SID),
+    TWILIO_AUTH_TOKEN: Boolean(process.env.TWILIO_AUTH_TOKEN),
+    TWILIO_FROM_NUMBER: Boolean(process.env.TWILIO_FROM_NUMBER),
   };
 
   let db: {
